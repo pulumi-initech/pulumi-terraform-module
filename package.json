@@ -1,0 +1,14 @@
+{
+    "name": "pulumi-terraform-module",
+    "main": "index.ts",
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@pulumi/pulumi": "^3.113.0",
+        "@pulumi/rdsmod": "file:sdks/rdsmod",
+        "@pulumi/std": "^2.2.0",
+        "@pulumi/vpc": "file:sdks/vpc"
+    }
+}

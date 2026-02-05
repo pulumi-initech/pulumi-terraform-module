@@ -1,0 +1,22 @@
+name: pulumi-terraform-module
+description: An example Pulumi program using Terraform module interop
+runtime: nodejs
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: typescript
+packages:
+  rdsmod:
+    source: terraform-module
+    version: 0.2.0
+    parameters:
+      - terraform-aws-modules/rds/aws
+      - 6.10.0
+      - rdsmod
+  vpc:
+    source: terraform-module
+    version: 0.2.0
+    parameters:
+      - terraform-aws-modules/vpc/aws
+      - 5.19.0
+      - vpc

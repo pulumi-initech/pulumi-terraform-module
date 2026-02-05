@@ -1,0 +1,4 @@
+environment:
+  - shared/aws-dev
+config:
+  node_count: 3
