@@ -48,7 +48,7 @@ new aws.vpc.SecurityGroupIngressRule('test-rds-sg-ingress', {
 });
 
 // Create an RDS instance using the terraform-aws-modules/rds module
-new rdsmod.Module("test-rds", {
+const rds = new rdsmod.Module("test-rds", {
   engine: "mysql",
   identifier: `test-rds-${prefix}`,
   manage_master_user_password: true,
@@ -69,6 +69,11 @@ new rdsmod.Module("test-rds", {
   create_db_option_group: false,
   create_db_parameter_group: false,
 });
+
+// Export RDS outputs for monitoring stack to reference
+export const rdsInstanceId = rds.db_instance_identifier;
+export const rdsInstanceArn = rds.db_instance_arn;
+export const awsAccountId = aws.getCallerIdentityOutput({}).accountId;
 
 // Utility function to calculate subnet CIDRs
 function getCidrSubnet(cidr: string, netnum: number): pulumi.Output<string> {
