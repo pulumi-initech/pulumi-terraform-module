@@ -1,4 +1,6 @@
 environment:
   - shared/aws-dev
+  - tf/baseinfra-outputs
 config:
-  node_count: 3
+  pulumi-terraform-module:node_count: "3"
+  aws:region: us-east-1

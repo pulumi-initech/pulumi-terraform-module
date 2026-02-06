@@ -5,7 +5,6 @@ This project demonstrates how to use existing Terraform modules directly within 
 ## Overview
 
 This example creates a complete AWS infrastructure stack using Terraform modules:
-- **VPC**: A multi-AZ VPC with public, private, and database subnets using the [terraform-aws-modules/vpc](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws) module
 - **RDS**: A MySQL RDS instance with managed master password using the [terraform-aws-modules/rds](https://registry.terraform.io/modules/terraform-aws-modules/rds/aws) module
 - **Security Group**: Native Pulumi AWS resources to control RDS access
 
@@ -29,13 +28,6 @@ packages:
       - terraform-aws-modules/rds/aws
       - 6.10.0
       - rdsmod
-  vpc:
-    source: terraform-module
-    version: 0.2.0
-    parameters:
-      - terraform-aws-modules/vpc/aws
-      - 5.19.0
-      - vpc
 ```
 
 ### How Module Import Works
@@ -52,9 +44,6 @@ You can also add modules using the CLI:
 ```bash
 # Add a module from Terraform Registry
 pulumi package add terraform-module <source> <version> <name>
-
-# Example: Add VPC module
-pulumi package add terraform-module terraform-aws-modules/vpc/aws 5.19.0 vpc
 
 # Add a local module
 pulumi package add terraform-module ./path/to/module localmod

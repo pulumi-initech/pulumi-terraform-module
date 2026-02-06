@@ -1,50 +1,31 @@
-import * as vpcmod from '@pulumi/vpc';
 import * as pulumi from '@pulumi/pulumi';
 import * as rdsmod from '@pulumi/rdsmod';
 import * as aws from '@pulumi/aws';
-import * as std from '@pulumi/std';
-
-// Get available availability zones
-const azs = aws.getAvailabilityZonesOutput({
-  filters: [{
-        name: "opt-in-status",
-        values: ["opt-in-not-required"],
-    }]
-}).names.apply(names => names.slice(0, 3));
-
-const cidr = "10.0.0.0/16";
 
 const cfg = new pulumi.Config();
 const prefix = cfg.get("prefix") ?? pulumi.getStack();
-
-// Create a VPC using the terraform-aws-modules/vpc module
-const vpc = new vpcmod.Module("test-vpc", {
-  azs: azs,
-  name: `test-vpc-${prefix}`,
-  cidr,
-  public_subnets: azs.apply(azs => azs.map((_, i) => {
-    return getCidrSubnet(cidr, i+1);
-  })),
-  private_subnets: azs.apply(azs => azs.map((_, i) => {
-    return getCidrSubnet(cidr, i+1+4);
-  })),
-  database_subnets: azs.apply(azs => azs.map((_, i) => {
-    return getCidrSubnet(cidr, i+1 + 8);
-  })),
-  create_database_subnet_group: true,
-});
+const vpcId = cfg.require("VpcId");
+const cidrBlock = cfg.require("CidrBlock");
+const databaseSubnetGroupName = cfg.require("DatabaseSubnetGroupName");
 
 // Create a security group for the RDS instance
 const rdsSecurityGroup = new aws.ec2.SecurityGroup('test-rds-sg', {
-  vpcId: vpc.vpc_id.apply(id => id!),
+  vpcId: vpcId,
 });
 
 new aws.vpc.SecurityGroupIngressRule('test-rds-sg-ingress', {
   ipProtocol: 'tcp',
   securityGroupId: rdsSecurityGroup.id,
-  cidrIpv4: vpc.vpc_cidr_block.apply(cidr => cidr!),
+  cidrIpv4: cidrBlock,
   fromPort: 3306,
   toPort: 3306,
+});
+
+// Create an explicty instance of the RDS module provider to ensure a specific AWS region
+const rdsProvider = new rdsmod.Provider("rds-provider", {
+    aws: {
+        "region": "us-east-1"
+    }
 });
 
 // Create an RDS instance using the terraform-aws-modules/rds module
@@ -62,24 +43,15 @@ const rds = new rdsmod.Module("test-rds", {
   username: "complete_mysql",
   port: '3306',
   multi_az: true,
-  db_subnet_group_name: vpc.database_subnet_group_name.apply(name => name!),
+  db_subnet_group_name: databaseSubnetGroupName,
   vpc_security_group_ids: [rdsSecurityGroup.id],
   skip_final_snapshot: true,
   deletion_protection: false,
   create_db_option_group: false,
   create_db_parameter_group: false,
-});
+}, { provider: rdsProvider });
 
 // Export RDS outputs for monitoring stack to reference
 export const rdsInstanceId = rds.db_instance_identifier;
 export const rdsInstanceArn = rds.db_instance_arn;
 export const awsAccountId = aws.getCallerIdentityOutput({}).accountId;
-
-// Utility function to calculate subnet CIDRs
-function getCidrSubnet(cidr: string, netnum: number): pulumi.Output<string> {
-    return std.cidrsubnetOutput({
-    input: cidr,
-    newbits: 8,
-    netnum,
-  }).result;
-}
